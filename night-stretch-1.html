@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>おやすみ前の5分ストレッチ</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(160deg, #1b1a2e 0%, #2d2a4a 50%, #3a2f4d 100%);
+    font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+    color: #f0eefa;
+  }
+  .card {
+    width: 100%;
+    max-width: 420px;
+    padding: 32px 28px 28px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+    text-align: center;
+  }
+  h1 {
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    margin: 0 0 4px;
+    color: #cfc9f5;
+  }
+  .sub {
+    font-size: 12px;
+    color: #9d97c2;
+    margin-bottom: 24px;
+  }
+  .illustration {
+    width: 96px;
+    height: 96px;
+    margin: 0 auto 6px;
+  }
+  .illustration svg {
+    width: 100%;
+    height: 100%;
+    stroke: #cfc9f5;
+    fill: none;
+    stroke-width: 5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .ring {
+    position: relative;
+    width: 180px;
+    height: 180px;
+    margin: 0 auto 20px;
+  }
+  svg { transform: rotate(-90deg); }
+  circle.bg { stroke: rgba(255,255,255,0.1); }
+  circle.fg {
+    stroke: #a99bff;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s linear;
+  }
+  .time {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 36px;
+    font-weight: 300;
+  }
+  .stretch-name {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    min-height: 28px;
+  }
+  .instruction {
+    font-size: 14px;
+    color: #d8d4ee;
+    line-height: 1.6;
+    min-height: 60px;
+    margin-bottom: 20px;
+    padding: 0 8px;
+  }
+  .progress-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 22px;
+  }
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+  }
+  .dot.done { background: #a99bff; }
+  .dot.active { background: #f0eefa; }
+  .controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }
+  button {
+    border: none;
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  button:active { opacity: 0.7; }
+  .primary { background: #a99bff; color: #1b1a2e; font-weight: 600; }
+  .secondary { background: rgba(255,255,255,0.1); color: #f0eefa; }
+  .bgm-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 16px;
+  }
+  .bgm-row button {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+  .bgm-row input[type="range"] {
+    width: 90px;
+  }
+  .bgm-status {
+    font-size: 10px;
+    color: #8d87ac;
+    margin-top: 8px;
+    min-height: 14px;
+  }
+  .done-message {
+    display: none;
+    font-size: 15px;
+    line-height: 1.7;
+    color: #d8d4ee;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>おやすみ前の5分ストレッチ</h1>
+  <div class="sub">音声ガイド付き・全5種目</div>
+
+  <div id="mainView">
+    <div class="illustration" id="illustration"></div>
+
+    <div class="ring">
+      <svg width="180" height="180">
+        <circle class="bg" cx="90" cy="90" r="80" fill="none" stroke-width="8"/>
+        <circle class="fg" id="progressCircle" cx="90" cy="90" r="80" fill="none" stroke-width="8"
+                stroke-dasharray="502.4" stroke-dashoffset="0"/>
+      </svg>
+      <div class="time" id="timeDisplay">0:60</div>
+    </div>
+
+    <div class="stretch-name" id="stretchName">開始を押してください</div>
+    <div class="instruction" id="instructionText">毎晩同じ順番で5種目、各1分間行います。</div>
+
+    <div class="progress-dots" id="dots"></div>
+
+    <div class="controls">
+      <button class="primary" id="startBtn">開始</button>
+      <button class="secondary" id="pauseBtn" style="display:none;">一時停止</button>
+      <button class="secondary" id="resetBtn" style="display:none;">リセット</button>
+    </div>
+
+    <div class="bgm-row">
+      <button class="secondary" id="bgmBtn">BGM: OFF</button>
+      <input type="range" id="volumeSlider" min="0" max="0.3" step="0.01" value="0.18">
+      <button class="secondary" id="testBtn">テスト音</button>
+    </div>
+    <div class="bgm-status" id="bgmStatus"></div>
+  </div>
+
+  <div class="done-message" id="doneMessage">
+    5種目すべて終わりました。<br>そのまま照明を落として休んでください。
+  </div>
+</div>
+
+<script>
+const stretches = [
+  {
+    name: "首のストレッチ",
+    duration: 60,
+    sides: ["右", "左"],
+    instructionTemplate: side => `頭を${side}にゆっくり倒します。反対の手を頭に添えて軽く重みをかけます。`
+  },
+  {
+    name: "肩と胸を開くストレッチ",
+    duration: 60,
+    instruction: "両手を後ろで組み、肩甲骨を寄せながら胸を開きます。呼吸を止めずに1分間キープします。"
+  },
+  {
+    name: "手首と前腕のストレッチ",
+    duration: 60,
+    sides: ["右", "左"],
+    instructionTemplate: side => `${side}の腕を前に伸ばし、もう片方の手で指先を下に反らします。`
+  },
+  {
+    name: "座ったままの背骨ひねり",
+    duration: 60,
+    sides: ["右", "左"],
+    instructionTemplate: side => `上半身を${side}にひねります。骨盤は正面に向けたままにします。`
+  },
+  {
+    name: "太もも裏のストレッチ",
+    duration: 60,
+    instruction: "脚を伸ばして座り、上体を股関節から前に倒します。膝を軽く曲げたままで構いません。"
+  }
+];
+
+const startBtn = document.getElementById('startBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const resetBtn = document.getElementById('resetBtn');
+const stretchName = document.getElementById('stretchName');
+const instructionText = document.getElementById('instructionText');
+const timeDisplay = document.getElementById('timeDisplay');
+const progressCircle = document.getElementById('progressCircle');
+const dotsContainer = document.getElementById('dots');
+const mainView = document.getElementById('mainView');
+const doneMessage = document.getElementById('doneMessage');
+const illustrationEl = document.getElementById('illustration');
+
+const CIRCUMFERENCE = 502.4;
+let currentIndex = -1;
+let remaining = 0;
+let timerId = null;
+let isPaused = false;
+
+stretches.forEach(() => {
+  const dot = document.createElement('div');
+  dot.className = 'dot';
+  dotsContainer.appendChild(dot);
+});
+const dotEls = dotsContainer.children;
+
+const speechAvailable = typeof window !== 'undefined'
+  && 'speechSynthesis' in window
+  && typeof SpeechSynthesisUtterance !== 'undefined';
+
+if (!speechAvailable) {
+  const notice = document.createElement('div');
+  notice.style.cssText = 'font-size:11px;color:#e0a8a8;margin-top:14px;';
+  notice.textContent = 'この端末では音声読み上げが使えないため、画面表示のみで進行します。';
+  document.querySelector('.card').appendChild(notice);
+}
+
+function speak(text) {
+  if (!speechAvailable) return;
+  try {
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'ja-JP';
+    utter.rate = 0.95;
+    window.speechSynthesis.speak(utter);
+  } catch (e) {
+    console.error('speech error', e);
+  }
+}
+
+const bgmBtn = document.getElementById('bgmBtn');
+const volumeSlider = document.getElementById('volumeSlider');
+const testBtn = document.getElementById('testBtn');
+const bgmStatus = document.getElementById('bgmStatus');
+
+let audioCtx = null;
+let bgmNodes = null;
+let bgmOn = false;
+
+const audioAvailable = typeof window !== 'undefined'
+  && (window.AudioContext || window.webkitAudioContext);
+
+if (!audioAvailable) {
+  bgmBtn.disabled = true;
+  testBtn.disabled = true;
+  bgmBtn.textContent = 'BGM: 非対応';
+  bgmStatus.textContent = 'この端末はWeb Audio APIに対応していません。';
+}
+
+function getAudioCtx() {
+  if (!audioCtx) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new Ctx();
+    audioCtx.onstatechange = () => {
+      bgmStatus.textContent = '音声の状態: ' + audioCtx.state;
+    };
+  }
+  return audioCtx;
+}
+
+function buildBgmGraph(ctx) {
+  const master = ctx.createGain();
+  master.gain.value = parseFloat(volumeSlider.value);
+  master.connect(ctx.destination);
+
+  // 明るめの長三和音を重ねたパッド音を生成する(C3-E3-G3-C4)
+  const freqs = [130.81, 164.81, 196.00, 261.63];
+  const oscNodes = freqs.map((f, i) => {
+    const osc = ctx.createOscillator();
+    osc.type = i === freqs.length - 1 ? 'triangle' : 'sine';
+    osc.frequency.value = f;
+    const g = ctx.createGain();
+    g.gain.value = i === freqs.length - 1 ? 0.18 : 0.35;
+    osc.connect(g);
+    g.connect(master);
+    osc.start();
+    return { osc, g };
+  });
+
+  // 80BPM(1拍0.75秒)のテンポで音量がゆるやかに脈打つようにする
+  const bpm = 80;
+  const lfo = ctx.createOscillator();
+  lfo.frequency.value = bpm / 60 / 2;
+  const lfoGain = ctx.createGain();
+  lfoGain.gain.value = 0.06;
+  lfo.connect(lfoGain);
+  lfoGain.connect(master.gain);
+  lfo.start();
+
+  return { master, oscNodes, lfo };
+}
+
+function startBGM() {
+  if (!audioAvailable) return;
+  try {
+    const ctx = getAudioCtx();
+    const afterResume = () => {
+      bgmNodes = buildBgmGraph(ctx);
+      bgmOn = true;
+      bgmStatus.textContent = '音声の状態: ' + ctx.state;
+    };
+    if (ctx.state === 'suspended') {
+      ctx.resume().then(afterResume).catch(err => {
+        bgmStatus.textContent = '再生できませんでした: ' + err.message;
+      });
+    } else {
+      afterResume();
+    }
+  } catch (e) {
+    bgmStatus.textContent = '再生できませんでした: ' + e.message;
+  }
+}
+
+function stopBGM() {
+  if (!bgmNodes) return;
+  try {
+    bgmNodes.oscNodes.forEach(({ osc }) => { try { osc.stop(); } catch (e) {} });
+    try { bgmNodes.lfo.stop(); } catch (e) {}
+    bgmNodes.master.disconnect();
+  } catch (e) {
+    console.error('bgm stop error', e);
+  }
+  bgmNodes = null;
+  bgmOn = false;
+}
+
+bgmBtn.addEventListener('click', () => {
+  if (bgmOn) {
+    stopBGM();
+    bgmBtn.textContent = 'BGM: OFF';
+  } else {
+    startBGM();
+    bgmBtn.textContent = 'BGM: ON';
+  }
+});
+
+testBtn.addEventListener('click', () => {
+  if (!audioAvailable) return;
+  try {
+    const ctx = getAudioCtx();
+    const run = () => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 440;
+      g.gain.value = 0.4;
+      osc.connect(g);
+      g.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.35);
+      bgmStatus.textContent = 'テスト音を再生しました(状態: ' + ctx.state + ')';
+    };
+    if (ctx.state === 'suspended') {
+      ctx.resume().then(run).catch(err => {
+        bgmStatus.textContent = 'テスト音を再生できませんでした: ' + err.message;
+      });
+    } else {
+      run();
+    }
+  } catch (e) {
+    bgmStatus.textContent = 'テスト音を再生できませんでした: ' + e.message;
+  }
+});
+
+volumeSlider.addEventListener('input', () => {
+  if (bgmNodes) bgmNodes.master.gain.value = parseFloat(volumeSlider.value);
+});
+
+function updateDots() {
+  for (let i = 0; i < dotEls.length; i++) {
+    dotEls[i].className = 'dot' + (i < currentIndex ? ' done' : i === currentIndex ? ' active' : '');
+  }
+}
+
+function updateRing() {
+  const total = stretches[currentIndex].duration;
+  const offset = CIRCUMFERENCE * (1 - remaining / total);
+  progressCircle.style.strokeDashoffset = offset;
+  timeDisplay.textContent = '0:' + String(remaining).padStart(2, '0');
+}
+
+const illustrationSVGs = [
+  // 首のストレッチ
+  `<svg viewBox="0 0 100 100"><circle cx="58" cy="20" r="12"/><line x1="53" y1="32" x2="48" y2="45"/><line x1="48" y1="45" x2="48" y2="80"/><line x1="48" y1="55" x2="30" y2="65"/><line x1="48" y1="55" x2="68" y2="48"/><line x1="48" y1="80" x2="35" y2="98"/><line x1="48" y1="80" x2="61" y2="98"/></svg>`,
+  // 肩と胸を開くストレッチ
+  `<svg viewBox="0 0 100 100"><circle cx="50" cy="18" r="12"/><line x1="50" y1="30" x2="50" y2="75"/><path d="M50 40 Q30 55 50 62 Q70 55 50 40"/><line x1="50" y1="75" x2="35" y2="98"/><line x1="50" y1="75" x2="65" y2="98"/></svg>`,
+  // 手首と前腕のストレッチ
+  `<svg viewBox="0 0 100 100"><line x1="12" y1="72" x2="55" y2="72"/><line x1="55" y1="72" x2="55" y2="42"/><line x1="44" y1="42" x2="66" y2="42"/><path d="M68 58 Q82 58 79 44"/></svg>`,
+  // 座ったままの背骨ひねり
+  `<svg viewBox="0 0 100 100"><g transform="rotate(14 50 55)"><circle cx="50" cy="20" r="12"/><line x1="50" y1="32" x2="50" y2="65"/><line x1="50" y1="65" x2="30" y2="82"/><line x1="50" y1="65" x2="70" y2="82"/><line x1="50" y1="45" x2="76" y2="38"/><line x1="50" y1="45" x2="28" y2="55"/></g></svg>`,
+  // 太もも裏のストレッチ
+  `<svg viewBox="0 0 100 100"><circle cx="22" cy="55" r="12"/><path d="M22 67 Q42 75 66 80"/><line x1="66" y1="80" x2="92" y2="80"/><line x1="30" y1="65" x2="62" y2="84"/></svg>`
+];
+
+function renderIllustration(index) {
+  illustrationEl.innerHTML = illustrationSVGs[index] || '';
+}
+
+function renderStretchText(s, sideIndex) {
+  if (s.sides) {
+    stretchName.textContent = s.name + '（' + s.sides[sideIndex] + '）';
+    instructionText.textContent = s.instructionTemplate(s.sides[sideIndex]);
+  } else {
+    stretchName.textContent = s.name;
+    instructionText.textContent = s.instruction;
+  }
+}
+
+function startStretch(index) {
+  currentIndex = index;
+  const s = stretches[index];
+  remaining = s.duration;
+  let sideIndex = 0;
+
+  renderStretchText(s, sideIndex);
+  renderIllustration(index);
+  updateDots();
+  updateRing();
+
+  const intro = s.sides
+    ? s.name + '。' + s.sides[0] + 'から。' + s.instructionTemplate(s.sides[0])
+    : s.name + '。' + s.instruction;
+  speak(intro);
+
+  clearInterval(timerId);
+  timerId = setInterval(() => {
+    if (isPaused) return;
+    remaining--;
+    updateRing();
+
+    // 左右がある種目は半分経過したところで反対側に切り替える
+    if (s.sides && sideIndex === 0 && remaining === s.duration / 2) {
+      sideIndex = 1;
+      renderStretchText(s, sideIndex);
+      speak('反対側、' + s.sides[1] + 'です。' + s.instructionTemplate(s.sides[1]));
+    } else if (remaining === 10) {
+      speak('残り10秒');
+    } else if (remaining > 0 && remaining <= 3) {
+      speak(String(remaining));
+    }
+
+    if (remaining <= 0) {
+      clearInterval(timerId);
+      if (index + 1 < stretches.length) {
+        setTimeout(() => startStretch(index + 1), 800);
+      } else {
+        finishAll();
+      }
+    }
+  }, 1000);
+}
+
+function finishAll() {
+  updateDots();
+  for (let i = 0; i < dotEls.length; i++) dotEls[i].className = 'dot done';
+  mainView.style.display = 'none';
+  doneMessage.style.display = 'block';
+  speak('お疲れさまでした。全種目終わりました。');
+}
+
+startBtn.addEventListener('click', () => {
+  startBtn.style.display = 'none';
+  pauseBtn.style.display = 'inline-block';
+  resetBtn.style.display = 'inline-block';
+  startStretch(0);
+});
+
+pauseBtn.addEventListener('click', () => {
+  isPaused = !isPaused;
+  pauseBtn.textContent = isPaused ? '再開' : '一時停止';
+  if (!speechAvailable) return;
+  try {
+    if (isPaused) window.speechSynthesis.pause();
+    else window.speechSynthesis.resume();
+  } catch (e) {
+    console.error('speech error', e);
+  }
+});
+
+resetBtn.addEventListener('click', () => {
+  clearInterval(timerId);
+  if (speechAvailable) {
+    try { window.speechSynthesis.cancel(); } catch (e) { console.error(e); }
+  }
+  currentIndex = -1;
+  isPaused = false;
+  pauseBtn.textContent = '一時停止';
+  startBtn.style.display = 'inline-block';
+  pauseBtn.style.display = 'none';
+  resetBtn.style.display = 'none';
+  stretchName.textContent = '開始を押してください';
+  instructionText.textContent = '毎晩同じ順番で5種目、各1分間行います。';
+  timeDisplay.textContent = '0:60';
+  progressCircle.style.strokeDashoffset = 0;
+  illustrationEl.innerHTML = '';
+  mainView.style.display = 'block';
+  doneMessage.style.display = 'none';
+  updateDots();
+});
+</script>
+</body>
+</html>
