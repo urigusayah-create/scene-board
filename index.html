@@ -132,28 +132,28 @@
   }
   body[data-layout="vertical"] .board{
     flex-direction:column;
-    align-items:flex-start;
+    align-items:stretch;
     gap:34px;
-    max-width:420px;
+    max-width:460px;
+    width:100%;
     margin:0 auto;
+    padding-left:40px;
+    box-sizing:border-box;
   }
-  body[data-layout="horizontal"] .board::before{
-    content:"";
+  #threadSvg{
     position:absolute;
-    left:0; right:0; top:38px;
-    height:2px;
-    background:repeating-linear-gradient(90deg, var(--thread) 0 10px, transparent 10px 16px);
-    opacity:0.9;
+    top:0; left:0;
     z-index:0;
+    pointer-events:none;
+    overflow:visible;
   }
-  body[data-layout="vertical"] .board::before{
-    content:"";
-    position:absolute;
-    left:19px; top:0; bottom:0;
-    width:2px;
-    background:repeating-linear-gradient(180deg, var(--thread) 0 10px, transparent 10px 16px);
+  .thread-path{
+    fill:none;
+    stroke:var(--thread);
+    stroke-width:2;
+    stroke-dasharray:1 7;
+    stroke-linecap:round;
     opacity:0.9;
-    z-index:0;
   }
   .empty-state{
     font-family:'Shippori Mincho', serif;
@@ -169,26 +169,22 @@
     flex:0 0 auto;
     background:var(--card-bg);
     border:1px solid var(--card-border);
-    border-radius:16px;
+    border-radius:2px;
     box-shadow:0 8px 16px -6px var(--card-shadow);
     padding:14px 16px 10px;
     z-index:1;
   }
   body[data-layout="horizontal"] .card{ margin-top:18px; }
-  body[data-layout="vertical"] .card{ width:100%; max-width:400px; margin-left:40px; }
+  body[data-layout="vertical"] .card{ width:100%; }
 
-  .badge{
+  .pin{
     position:absolute;
-    top:-14px; left:14px;
-    width:30px; height:30px;
+    top:-9px; left:50%;
+    transform:translateX(-50%);
+    width:16px; height:16px;
     border-radius:50%;
-    background:radial-gradient(circle at 35% 30%, #f2d27a, var(--pin) 55%, var(--pin-dark) 100%);
-    box-shadow:0 3px 5px rgba(0,0,0,0.35), 0 0 0 3px var(--card-bg);
-    display:flex; align-items:center; justify-content:center;
-    font-family:'JetBrains Mono', monospace;
-    font-size:0.72rem;
-    font-weight:700;
-    color:#2b2015;
+    background:radial-gradient(circle at 35% 30%, #f6dfa0, var(--pin) 55%, var(--pin-dark) 100%);
+    box-shadow:0 3px 4px rgba(0,0,0,0.35), 0 0 0 3px var(--card-bg);
     z-index:2;
   }
 
@@ -200,24 +196,38 @@
     width:100%;
     border:none;
     background:transparent;
-    font-family:'Zen Kaku Gothic New', sans-serif;
+    font-family:'Shippori Mincho', serif;
     font-weight:700;
-    font-size:0.95rem;
+    font-size:1rem;
+    letter-spacing:0.01em;
     color:var(--ink);
     padding:0;
   }
   .headline-input::placeholder{color:var(--ink-faint); font-weight:500;}
   .headline-input:focus{outline:none;}
-  .meta-line{
-    font-family:'JetBrains Mono', monospace;
-    font-size:0.68rem;
-    color:var(--ink-faint);
-    margin-top:1px;
+  .card-divider{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    margin:7px 0 0;
+  }
+  .card-divider::before, .card-divider::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background:var(--card-border);
+  }
+  .card-divider .mark{
+    width:3px; height:3px;
+    border-radius:50%;
+    background:var(--pin-dark);
+    opacity:0.7;
+    flex:0 0 auto;
   }
 
   .card textarea{
     width:100%;
-    min-height:110px;
+    min-height:220px;
     resize:vertical;
     border:none;
     background:transparent;
@@ -272,7 +282,7 @@
     flex:0 0 auto;
     min-height:170px;
     border:2px dashed rgba(239,228,210,0.4);
-    border-radius:16px;
+    border-radius:2px;
     display:flex;
     align-items:center;
     justify-content:center;
@@ -284,7 +294,7 @@
     z-index:1;
   }
   body[data-layout="horizontal"] .add-card{ margin-top:18px; align-self:flex-start; }
-  body[data-layout="vertical"] .add-card{ width:100%; max-width:400px; margin-left:40px; min-height:70px; }
+  body[data-layout="vertical"] .add-card{ width:100%; min-height:70px; }
   .add-card:hover{background:rgba(0,0,0,0.18);border-color:var(--pin);}
 
   /* ---------- Library overlay ---------- */
@@ -336,6 +346,7 @@
   .library-panel .btn{color:var(--ink);border-color:rgba(0,0,0,0.15);background:transparent;}
   .library-panel .btn:hover{background:rgba(0,0,0,0.06);}
   .close-row{display:flex;justify-content:flex-end;margin-top:16px;gap:8px;}
+  .library-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
 
   @media (max-width: 640px){
     main{padding:28px 16px;}
@@ -366,6 +377,11 @@
 <div class="overlay" id="overlay">
   <div class="library-panel">
     <h2>Library</h2>
+    <div class="library-actions">
+      <button class="btn" id="exportAllBtn">全体をJSONで書き出し</button>
+      <button class="btn" id="importAllBtn">JSONを読み込み</button>
+      <input type="file" id="importFileInput" accept="application/json" style="display:none;">
+    </div>
     <div id="workList"></div>
     <div class="close-row">
       <button class="btn" id="closeLibraryBtn">閉じる</button>
@@ -435,10 +451,13 @@ function applyLayout(){
 }
 document.getElementById('layoutH').addEventListener('click', () => {
   data.layout = 'horizontal'; applyLayout(); scheduleSave();
+  requestAnimationFrame(updateThread);
 });
 document.getElementById('layoutV').addEventListener('click', () => {
   data.layout = 'vertical'; applyLayout(); scheduleSave();
+  requestAnimationFrame(updateThread);
 });
+window.addEventListener('resize', () => requestAnimationFrame(updateThread));
 
 /* ---------- Rendering ---------- */
 function render(){
@@ -447,6 +466,15 @@ function render(){
 
   const board = document.getElementById('board');
   board.innerHTML = '';
+
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('id', 'threadSvg');
+  const path = document.createElementNS(svgNS, 'path');
+  path.setAttribute('id', 'threadPath');
+  path.setAttribute('class', 'thread-path');
+  svg.appendChild(path);
+  board.appendChild(svg);
 
   if(work.scenes.length === 0){
     const empty = document.createElement('div');
@@ -472,6 +500,42 @@ function render(){
   board.appendChild(addCard);
 
   updateStats();
+  requestAnimationFrame(updateThread);
+}
+
+function updateThread(){
+  const board = document.getElementById('board');
+  const svg = document.getElementById('threadSvg');
+  const path = document.getElementById('threadPath');
+  if(!board || !svg || !path) return;
+
+  const boardRect = board.getBoundingClientRect();
+  svg.setAttribute('width', boardRect.width);
+  svg.setAttribute('height', boardRect.height);
+  svg.setAttribute('viewBox', `0 0 ${boardRect.width} ${boardRect.height}`);
+
+  const pins = Array.from(board.querySelectorAll('.pin')).map(b => {
+    const r = b.getBoundingClientRect();
+    return { x: r.left + r.width / 2 - boardRect.left, y: r.top + r.height / 2 - boardRect.top };
+  });
+
+  if(pins.length < 2){
+    path.setAttribute('d', '');
+    return;
+  }
+
+  let d = `M ${pins[0].x} ${pins[0].y}`;
+  for(let i = 1; i < pins.length; i++){
+    const p0 = pins[i - 1], p1 = pins[i];
+    const mx = (p0.x + p1.x) / 2, my = (p0.y + p1.y) / 2;
+    const dx = p1.x - p0.x, dy = p1.y - p0.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len, ny = dx / len;
+    const sag = Math.min(16, len * 0.18);
+    const cx = mx + nx * sag, cy = my + ny * sag;
+    d += ` Q ${cx} ${cy} ${p1.x} ${p1.y}`;
+  }
+  path.setAttribute('d', d);
 }
 
 function ringSvg(){
@@ -496,10 +560,9 @@ function buildCard(scene, idx){
   card.draggable = true;
   card.dataset.id = scene.id;
 
-  const badge = document.createElement('div');
-  badge.className = 'badge';
-  badge.textContent = String(idx + 1).padStart(2, '0');
-  card.appendChild(badge);
+  const pin = document.createElement('div');
+  pin.className = 'pin';
+  card.appendChild(pin);
 
   const head = document.createElement('div');
   head.className = 'card-head';
@@ -515,10 +578,12 @@ function buildCard(scene, idx){
   });
   head.appendChild(headline);
 
-  const metaLine = document.createElement('div');
-  metaLine.className = 'meta-line';
-  metaLine.textContent = 'Scene ' + String(idx + 1).padStart(2, '0');
-  head.appendChild(metaLine);
+  const divider = document.createElement('div');
+  divider.className = 'card-divider';
+  const mark = document.createElement('span');
+  mark.className = 'mark';
+  divider.appendChild(mark);
+  head.appendChild(divider);
 
   card.appendChild(head);
 
@@ -669,6 +734,55 @@ document.getElementById('closeLibraryBtn').addEventListener('click', () => {
 });
 overlay.addEventListener('click', (e) => {
   if(e.target === overlay) overlay.classList.remove('open');
+});
+
+document.getElementById('exportAllBtn').addEventListener('click', () => {
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'scene-board-library.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('importAllBtn').addEventListener('click', () => {
+  document.getElementById('importFileInput').click();
+});
+document.getElementById('importFileInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const imported = JSON.parse(reader.result);
+      if(!imported || typeof imported.works !== 'object') throw new Error('invalid format');
+      let added = 0, updated = 0;
+      Object.values(imported.works).forEach(w => {
+        if(!w || !w.id) return;
+        if(data.works[w.id]){
+          if((w.updatedAt || 0) > (data.works[w.id].updatedAt || 0)){
+            data.works[w.id] = w;
+            updated++;
+          }
+        } else {
+          data.works[w.id] = w;
+          added++;
+        }
+      });
+      scheduleSave();
+      render();
+      renderLibrary();
+      alert(`読み込み完了：新規 ${added} 件、更新 ${updated} 件`);
+    }catch(err){
+      alert('読み込みに失敗しました。ファイルの形式を確認してください。');
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
 });
 
 function renderLibrary(){
